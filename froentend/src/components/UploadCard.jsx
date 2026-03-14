@@ -5,11 +5,14 @@ export default function UploadCard({
     setSelectedFile,
     isUploading,
     uploadProgress,
+    uploadPhase,
     uploadMessage,
     canUpload,
     onUpload,
     fileInputRef,
 }) {
+    const visibleProgress = Math.max(uploadProgress, isUploading ? 6 : 0);
+
     return (
         <div className="rounded-2xl border border-[var(--line)] bg-[#fff] p-4">
             <label htmlFor="pdf-input" className="mb-2 block text-sm font-medium">
@@ -40,10 +43,14 @@ export default function UploadCard({
                     <div className="h-2 w-full rounded-full bg-[#efe8da]">
                         <div
                             className="h-2 rounded-full bg-[var(--accent)] transition-all duration-300"
-                            style={{ width: `${uploadProgress}%` }}
+                            style={{ width: `${visibleProgress}%` }}
                         />
                     </div>
-                    <p className="mt-1 text-xs text-[var(--muted)]">Uploading... {uploadProgress}%</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                        {uploadPhase === "processing"
+                            ? "Upload complete. Processing PDF on the server..."
+                            : `Uploading PDF... ${uploadProgress}%`}
+                    </p>
                 </div>
             )}
 
@@ -53,7 +60,11 @@ export default function UploadCard({
                 disabled={!canUpload}
                 className="mt-4 w-full rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-[#8ea597]"
             >
-                {isUploading ? "Uploading" : "Upload PDF"}
+                {isUploading
+                    ? uploadPhase === "processing"
+                        ? "Processing..."
+                        : "Uploading..."
+                    : "Upload PDF"}
             </button>
 
             {uploadMessage && (

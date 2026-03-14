@@ -35,6 +35,7 @@ function App() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadPhase, setUploadPhase] = useState("idle");
     const [uploadMessage, setUploadMessage] = useState("");
     const scrollRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -263,10 +264,22 @@ function App() {
 
         try {
             setUploadMessage("");
-            setUploadProgress(0);
+            // Show immediate feedback even before the browser emits the first progress event.
+            setUploadProgress(5);
+            setUploadPhase("uploading");
             setIsUploading(true);
 
-            const response = await uploadPdf(selectedFile, setUploadProgress, token, activeChatId);
+            const response = await uploadPdf(
+                selectedFile,
+                (percent) => {
+                    setUploadProgress(percent);
+                    setUploadPhase(percent >= 100 ? "processing" : "uploading");
+                },
+                token,
+                activeChatId,
+            );
+            setUploadProgress(100);
+            setUploadPhase("processing");
             setUploadMessage(response.message || "PDF uploaded successfully.");
             setSelectedFile(null);
             if (fileInputRef.current) {
@@ -281,7 +294,10 @@ function App() {
             setUploadMessage(message);
         } finally {
             setIsUploading(false);
-            setTimeout(() => setUploadProgress(0), 500);
+            setTimeout(() => {
+                setUploadProgress(0);
+                setUploadPhase("idle");
+            }, 1200);
         }
     }
 
@@ -458,6 +474,7 @@ function App() {
                         setSelectedFile={setSelectedFile}
                         isUploading={isUploading}
                         uploadProgress={uploadProgress}
+                        uploadPhase={uploadPhase}
                         uploadMessage={uploadMessage}
                         canUpload={canUpload}
                         onUpload={handleUploadClick}
